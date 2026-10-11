@@ -1838,8 +1838,14 @@ function scanReconcile(t, text) {
       t.order = Math.round((sub + t.deliv) * 100) / 100;
       return;
     }
-    const d = Math.round((t.order - sub) * 100) / 100;
-    if (d > 0 && d <= 15 && (t.deliv == null || Math.abs(t.deliv - d) > 0.011)) t.deliv = d;
+    // Fill only — never overwrite a delivery charge the OCR already read. The
+    // Sub Total line is itself unreliable ("Sub Total: 119 7g" parses as 1.19),
+    // and a misread that lands inside the sane range would silently replace a
+    // correct figure with a wrong one. Arithmetic is the fallback, not the boss.
+    if (t.deliv == null) {
+      const d = Math.round((t.order - sub) * 100) / 100;
+      if (d > 0 && d <= 15) t.deliv = d;
+    }
   } else if (t.deliv != null) {
     t.order = Math.round((sub + t.deliv) * 100) / 100;
   }
@@ -1957,7 +1963,11 @@ function scanExtractAddress(text) {
     const joined = collected.map(scanAddrStrip).join(' ').replace(/\s+/g, ' ').trim();
     street = (joined.includes(',') ? joined.split(',')[0] : joined).trim();
   }
-  if (!street || scanAddrIsJunk(street)) return '';
+  // Same rule as the walk: shape beats keyword. "27A BANKHEAD AVENUE" is a real
+  // customer address even though "bankhead" is a junk keyword (it's the shop's
+  // own street, which appears in the header). Without this a whole street's
+  // worth of customers silently lost their label at the final gate.
+  if (!street || (scanAddrIsJunk(street) && !scanAddrIsStreet(street))) return '';
   return scanCleanTag(street);
 }
 function scanCleanTag(s) {
