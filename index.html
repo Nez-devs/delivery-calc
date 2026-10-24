@@ -72,7 +72,11 @@
   }
   .header-hist-btn:active { color: var(--text); border-color: var(--faint); }
   .header-hist-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-  .header-btns { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  /* Scan + Add share the top row, History spans the row below — three
+     buttons without making the header any taller than the old two-stack. */
+  .header-btns { display: grid; grid-template-columns: auto auto; gap: 6px; flex-shrink: 0; }
+  .header-btns .header-hist-btn { justify-content: center; }
+  .header-hist-btn.wide { grid-column: span 2; }
 
   .wrap { padding: 0 12px; }
   .ico { width: 15px; height: 15px; flex-shrink: 0; vertical-align: -2px; margin-right: 7px; }
@@ -216,6 +220,90 @@
   .shift-total-label { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500; color: var(--muted); text-transform: none; letter-spacing: 0; }
   .shift-total-val { font-size: 16px; color: var(--keep); font-family: 'JetBrains Mono', monospace; font-weight: 600; font-variant-numeric: tabular-nums; }
 
+
+  /* ── Address book / quick add ── */
+  .addr-panel {
+    position: fixed; inset: 0; background: var(--bg); z-index: 100;
+    transform: translateX(100%); transition: transform 0.25s ease;
+    overflow-y: auto; padding-bottom: 40px;
+  }
+  .addr-panel.open { transform: translateX(0); }
+  .addr-top { position: sticky; top: 0; z-index: 10; background: var(--bg); }
+  .addr-manage-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 8px; padding: 6px 11px; cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif; font-size: 12.5px; font-weight: 500;
+  }
+  .addr-panel.manage .addr-manage-btn { border-color: var(--accent); color: var(--accent); }
+  .addr-search-wrap { padding: 10px 12px; border-bottom: 1px solid var(--border); position: relative; }
+  .addr-search {
+    width: 100%; background: #0e0e0e; border: 1px solid #333; border-radius: 10px;
+    padding: 11px 38px 11px 12px; color: var(--text); outline: none;
+    font-family: 'Space Grotesk', sans-serif; font-size: 16px;
+  }
+  .addr-search:focus { border-color: var(--accent); }
+  .addr-search::placeholder { color: var(--faint); }
+  .addr-search-clear {
+    position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--muted); font-size: 15px;
+    padding: 6px 8px; cursor: pointer; display: none;
+  }
+  .addr-search-clear.show { display: block; }
+  .addr-banner {
+    margin: 10px 12px 0; padding: 10px 12px; border-radius: 10px; font-size: 13px;
+    border: 1px solid var(--accent-line); background: var(--accent-dim); color: var(--text);
+    display: flex; align-items: center; gap: 10px; line-height: 1.45;
+  }
+  .addr-banner span { flex: 1; }
+  .addr-list { padding: 4px 12px 0; }
+  .addr-row { border-bottom: 1px solid var(--border); }
+  .addr-main { display: flex; align-items: baseline; gap: 12px; padding: 13px 4px; cursor: pointer; }
+  .addr-name {
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text);
+  }
+  .addr-chg { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .addr-row.open { background: var(--surface); border: 1px solid var(--accent-line); border-radius: 12px; margin: 6px 0; }
+  .addr-row.open .addr-main { padding: 12px 12px 8px; }
+  .addr-row.new .addr-name { color: var(--accent); }
+  .addr-row.src { opacity: 0.35; pointer-events: none; }
+  .addr-x { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .addr-field { display: flex; align-items: center; gap: 8px; }
+  .addr-flabel { flex: 1; font-size: 12.5px; color: var(--muted); }
+  .addr-pfx { color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .addr-in {
+    background: #0e0e0e; border: 1px solid #333; border-radius: 8px; padding: 8px 10px;
+    color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 16px;
+    width: 100px; text-align: right; outline: none; -moz-appearance: textfield; appearance: textfield;
+  }
+  .addr-in::-webkit-outer-spin-button, .addr-in::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .addr-in:focus { border-color: var(--accent); }
+  .addr-in.text { width: 100%; text-align: left; font-family: 'Space Grotesk', sans-serif; }
+  .addr-btns { display: flex; gap: 6px; }
+  .addr-btn {
+    flex: 1; background: #0e0e0e; border: 1px solid #333; color: var(--muted);
+    border-radius: 8px; padding: 10px 8px; cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .addr-btn svg { width: 15px; height: 15px; }
+  .addr-btn:active { opacity: 0.8; }
+  .addr-btn.cash { color: var(--green); border-color: rgba(74,222,128,0.35); }
+  .addr-btn.cash.on { background: var(--green-dim); border-color: var(--green); }
+  .addr-btn.card { color: var(--accent); border-color: var(--accent-line); }
+  .addr-btn.primary { background: var(--accent); border-color: var(--accent); color: #0B0D0F; }
+  .addr-btn.danger { color: var(--owe); border-color: rgba(248,113,113,0.35); }
+  .addr-ok {
+    background: var(--accent); border: none; color: #0B0D0F; border-radius: 8px;
+    width: 42px; height: 38px; font-size: 17px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+  }
+  .addr-empty { text-align: center; color: var(--faint); padding: 50px 20px; font-size: 14px; line-height: 1.9; }
+  .addr-foot { display: flex; align-items: center; gap: 10px; padding: 18px 16px 6px; }
+  .addr-foot span { flex: 1; font-size: 12px; color: var(--muted); }
+  .addr-foot button {
+    background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px;
+    padding: 8px 12px; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: 12.5px;
+  }
 
   /* ── Mini Calculator ── */
   .calc-sheet-overlay {
@@ -546,7 +634,11 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>
         Scan
       </button>
-      <button class="header-hist-btn" onclick="openHistory()">
+      <button class="header-hist-btn" onclick="openAddr()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Add
+      </button>
+      <button class="header-hist-btn wide" onclick="openHistory()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
         History
       </button>
@@ -751,6 +843,27 @@
     <button class="hist-backup-btn import" onclick="document.getElementById('importFile').click()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M18 13l-6 6-6-6"/></svg> Import backup</button>
     <input type="file" accept="application/json,.json" id="importFile" style="display:none" onchange="handleImportFile(event)">
   </div>
+</div>
+
+<!-- ═══════════════════════════════ ADDRESS PANEL ════════════════════════ -->
+<div class="addr-panel" id="addrPanel">
+  <div class="addr-top">
+    <div class="history-header">
+      <button class="history-back" onclick="closeAddr()">←</button>
+      <span class="history-title" id="addrTitle">Add orders</span>
+      <span class="history-count" id="addrCount"></span>
+      <button class="addr-manage-btn" id="addrManageBtn" onclick="addrToggleManage()">Manage</button>
+    </div>
+    <div class="addr-search-wrap">
+      <input class="addr-search" id="addrSearch" type="text" placeholder="Search address…"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        oninput="addrOnSearch()" onkeydown="if(event.key==='Enter') addrSearchEnter()">
+      <button class="addr-search-clear" id="addrSearchClear" onclick="addrClearSearch()">✕</button>
+    </div>
+  </div>
+  <div id="addrBanner"></div>
+  <div class="addr-list" id="addrList"></div>
+  <div id="addrFoot"></div>
 </div>
 
 <!-- ═══════════════════════════════ SCAN PANEL ═══════════════════════════ -->
@@ -995,6 +1108,7 @@ function confirmAdd(key) {
   const tagEl = document.getElementById(key + '-add-tag');
   const tag = tagEl ? tagEl.value.trim() : '';
   state[key].entries.push(tag ? { v: val, tag } : val);
+  if (key === 'delivery' && tag) { addrLearn(tag, val); addrSave(); }
   hideInlineAdd(key);
   renderEntries(key);
   recalc();
@@ -1400,7 +1514,8 @@ function exportBackup() {
     version: 1,
     exported: new Date().toISOString(),
     count: history.length,
-    shifts: history
+    shifts: history,
+    addresses: addrDB      // address book travels with the backup
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1434,6 +1549,9 @@ function handleImportFile(ev) {
     try { parsed = JSON.parse(reader.result); }
     catch (e) { noticeDialog('That file isn\u2019t a valid backup — it couldn\u2019t be read.'); return; }
     if (!isValidBackup(parsed)) { noticeDialog('That file isn\u2019t a Float backup, or it\u2019s damaged.\nNothing was changed.'); return; }
+    // Address book first, so it merges even when every shift is a duplicate.
+    // Older backups have no address book \u2014 the shift merge below learns from them.
+    if (parsed.addresses) addrMergeImport(parsed.addresses);
     mergeImportedShifts(parsed.shifts);
   };
   reader.onerror = () => noticeDialog('Could not read that file.\nNothing was changed.');
@@ -1444,9 +1562,11 @@ function mergeImportedShifts(incoming) {
   const current = loadHistory();
   const seen = new Set(current.map(s => s.ts));
   let added = 0;
+  const addedShifts = [];
   incoming.forEach(s => {
-    if (!seen.has(s.ts)) { current.push(s); seen.add(s.ts); added++; }
+    if (!seen.has(s.ts)) { current.push(s); seen.add(s.ts); added++; addedShifts.push(s); }
   });
+  if (addedShifts.length) { addrSeedFromShifts(addedShifts); addrSave(); }
   if (added === 0) {
     noticeDialog('Nothing new to import — all ' + incoming.length + ' shift' + (incoming.length !== 1 ? 's' : '') + ' are already in your history.');
     return;
@@ -1486,7 +1606,7 @@ function applyState() {
   recalc();
 }
 
-function init() { load(); applyState(); startWakeLock(); scanOfferResume(); }
+function init() { load(); applyState(); addrInit(); startWakeLock(); scanOfferResume(); }
 
 
 // ── Ticket Scanner (Tesseract) ───────────────────────────────
@@ -1767,6 +1887,7 @@ async function scanReadAll() {
       t.deliv = scanExtractValue(t.raw, ['delivery','deliverv','deljvery','de1ivery','del charge','del ']);
       scanReconcile(t, t.raw);
       t.tag = scanExtractAddress(t.raw);
+      addrSnapTicket(t);   // known address → clean label, and fill a charge OCR missed
       t.status = (t.order != null || t.deliv != null) ? 'done' : 'fail';
     } catch (e) { t.raw = 'ERROR: ' + e.message; t.status = 'fail'; }
     scanRenderQueue();
@@ -2163,9 +2284,11 @@ function scanAddAll() {
     if (v && v > 0) {
       const tag = t && t.tag ? t.tag : '';
       state.delivery.entries.push(tag ? { v, tag } : v);
+      if (tag) addrLearn(tag, v);   // new addresses join the address book
       addedDeliv++;
     }
   });
+  addrSave();
   if (addedOrders === 0 && addedDeliv === 0) { showToast('Nothing to add'); return; }
   renderEntries('orders');
   renderEntries('delivery');
@@ -2179,6 +2302,492 @@ function scanAddAll() {
   closeScan();
   showToast('✓ Added ' + addedOrders + ' order' + (addedOrders!==1?'s':'') + ', ' + addedDeliv + ' delivery' + (cardSkipped ? ' · ' + cardSkipped + ' card' : ''));
 }
+
+// ── Address book ─────────────────────────────────────────────
+// A local list of delivery addresses and their charges, so repeat orders can
+// be added in a couple of taps instead of scanning the ticket.
+//
+//   list   — [{ key, name, charge, seen }]. `key` is the normalised address
+//            used for matching; `name` is what's displayed and used as the
+//            entry label; `seen` is the ISO time the charge was last confirmed.
+//   ignore — keys the user deleted, so history/scans never re-learn them.
+//   alias  — { oldKey: targetKey } from merges and renames, so OCR variants
+//            of a merged spelling resolve to the right address in future.
+//
+// Built once from shift history on first launch, then grows from "Add all",
+// this panel, and labelled manual delivery entries. Newest charge always wins.
+const ADDR_KEY = 'drivercalc2_addresses';
+let addrDB = { list: [], ignore: [], alias: {} };
+
+function addrLoad() {
+  try {
+    const r = JSON.parse(localStorage.getItem(ADDR_KEY));
+    if (r && Array.isArray(r.list)) {
+      addrDB = { list: r.list, ignore: Array.isArray(r.ignore) ? r.ignore : [], alias: (r.alias && typeof r.alias === 'object') ? r.alias : {} };
+      return true;
+    }
+  } catch (e) {}
+  addrDB = { list: [], ignore: [], alias: {} };
+  return false;
+}
+function addrSave() {
+  try { localStorage.setItem(ADDR_KEY, JSON.stringify(addrDB)); } catch (e) {}
+}
+
+// Abbreviations are expanded on the LAST word only — that's where the street
+// type sits, and it avoids mangling "St Machar Drive" into "Street Machar".
+const ADDR_ABBR = {
+  RD: 'ROAD', AVE: 'AVENUE', AV: 'AVENUE', ST: 'STREET', DR: 'DRIVE', CRES: 'CRESCENT',
+  CR: 'CRESCENT', TER: 'TERRACE', TERR: 'TERRACE', TCE: 'TERRACE', PL: 'PLACE',
+  GDNS: 'GARDENS', GDN: 'GARDENS', CT: 'COURT', CL: 'CLOSE', LN: 'LANE', GR: 'GROVE',
+  GRV: 'GROVE', SQ: 'SQUARE', PK: 'PARK', WY: 'WAY', PDE: 'PARADE'
+};
+function addrNorm(s) {
+  return String(s || '').replace(/…/g, '').toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function addrKey(s) {
+  const t = addrNorm(s);
+  if (!t) return '';
+  const p = t.split(' ');
+  if (p.length > 1 && ADDR_ABBR[p[p.length - 1]]) p[p.length - 1] = ADDR_ABBR[p[p.length - 1]];
+  return p.join(' ');
+}
+// OCR labels arrive in capitals ("27A BANKHEAD AVENUE"); show them in title
+// case so the list reads cleanly. Mixed-case names are left exactly as given.
+function addrNiceName(s) {
+  let t = String(s || '').replace(/…/g, '').replace(/\s+/g, ' ').trim();
+  if (t && /[A-Za-z]/.test(t) && (t === t.toUpperCase() || t === t.toLowerCase())) {
+    t = t.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase()).replace(/(\d)([a-z])\b/g, (m, d, c) => d + c.toUpperCase());
+  }
+  return t;
+}
+function addrHouse(key) { const m = key.match(/^(\d+[A-Z]?)\b/); return m ? m[1] : ''; }
+function addrLev(a, b) {
+  const m = a.length, n = b.length;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
+// Find the stored address for a label: exact key, then a merge/rename alias,
+// then a close fuzzy match (same house number, ≤2 character edits) so that
+// "27A BANKHFAD AVENUE" still lands on 27A Bankhead Avenue.
+function addrFind(label) {
+  const k = addrKey(label);
+  if (!k) return null;
+  const target = addrDB.alias[k] || k;
+  const exact = addrDB.list.find(x => x.key === target);
+  if (exact) return exact;
+  if (k.length < 10) return null;
+  const h = addrHouse(k);
+  let best = null, bestD = 3;
+  for (const x of addrDB.list) {
+    if (addrHouse(x.key) !== h || Math.abs(x.key.length - k.length) > 2) continue;
+    const d = addrLev(x.key, k);
+    if (d < bestD) { bestD = d; best = x; }
+  }
+  return best;
+}
+// Record a label + charge. Returns true when a NEW address was created.
+// `explicit` = the user deliberately added it, which overrides a past delete.
+function addrLearn(label, charge, when, explicit) {
+  const name = addrNiceName(label);
+  const k = addrKey(name);
+  const v = Math.round((parseFloat(charge) || 0) * 100) / 100;
+  if (!k || !(v > 0) || !/[A-Z]/.test(k) || k.length < 3) return false;
+  when = when || new Date().toISOString();
+  const e = addrFind(name);
+  if (e) {
+    if (!e.seen || new Date(when) >= new Date(e.seen)) { e.charge = v; e.seen = when; }
+    return false;
+  }
+  if (addrDB.ignore.includes(k)) {
+    if (!explicit) return false;
+    addrDB.ignore = addrDB.ignore.filter(x => x !== k);
+  }
+  addrDB.list.push({ key: k, name, charge: v, seen: when });
+  return true;
+}
+// Learn from saved shifts, oldest first, so each address ends up with the
+// charge from the most recent shift it appears in.
+function addrSeedFromShifts(shifts) {
+  const sorted = (shifts || []).slice().sort((a, b) => new Date(shiftDate(a)) - new Date(shiftDate(b)));
+  let added = 0;
+  sorted.forEach(s => {
+    const es = s && s.detail && s.detail.delivery && s.detail.delivery.entries;
+    if (!Array.isArray(es)) return;
+    const d = new Date(shiftDate(s));
+    const when = isNaN(d.getTime()) ? new Date(0).toISOString() : d.toISOString();
+    es.forEach(e => { const t = entryTag(e); if (t && addrLearn(t, entryVal(e), when)) added++; });
+  });
+  return added;
+}
+// First launch after the update: build the list from history, once.
+function addrInit() {
+  if (addrLoad()) return;
+  const n = addrSeedFromShifts(loadHistory());
+  addrSave();
+  if (n > 0) showToast('Learned ' + n + ' address' + (n !== 1 ? 'es' : '') + ' from history');
+}
+// Merge an address list from a backup file. Newer charges win; deletions and
+// merges from either side are respected.
+function addrMergeImport(inc) {
+  if (!inc || !Array.isArray(inc.list)) return;
+  (inc.ignore || []).forEach(k => { if (!addrDB.ignore.includes(k)) addrDB.ignore.push(k); });
+  Object.entries(inc.alias || {}).forEach(([a, b]) => { if (!addrDB.alias[a]) addrDB.alias[a] = b; });
+  inc.list.forEach(e => {
+    if (!e || !e.key || !(e.charge > 0)) return;
+    const cur = addrDB.list.find(x => x.key === e.key);
+    if (cur) {
+      if (new Date(e.seen || 0) > new Date(cur.seen || 0)) { cur.charge = e.charge; cur.seen = e.seen; cur.name = e.name || cur.name; }
+    } else {
+      addrDB.list.push({ key: e.key, name: e.name || e.key, charge: e.charge, seen: e.seen || new Date(0).toISOString() });
+    }
+  });
+  addrDB.list = addrDB.list.filter(x => !addrDB.ignore.includes(x.key) && !addrDB.alias[x.key]);
+  addrSave();
+}
+// Point every alias aimed at `from` at `to` instead.
+function addrRepoint(from, to) {
+  Object.keys(addrDB.alias).forEach(a => { if (addrDB.alias[a] === from) addrDB.alias[a] = to; });
+}
+// Scanner hook: snap an OCR label to the known spelling, and fill a delivery
+// charge the OCR couldn't read.
+function addrSnapTicket(t) {
+  if (!t || !t.tag) return;
+  const e = addrFind(t.tag);
+  if (!e) return;
+  t.tag = e.name;
+  if (t.deliv == null) t.deliv = e.charge;
+}
+
+// ── Address panel UI ──
+let addrMode = 'add';       // 'add' | 'manage'
+let addrOpenKey = null;     // expanded row key ('NEW' = the add-new row)
+let addrCashFor = null;     // row showing the cash total field
+let addrMerging = null;     // key of the address being merged away
+let addrDraft = {};         // typed values in the open row, kept across re-renders
+let addrSession = 0;        // orders added since the panel opened
+
+const ADDR_ICON_CASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>';
+const ADDR_ICON_CARD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 9.5h19"/></svg>';
+
+function addrEsc(s) { return scanEscape(String(s)).replace(/"/g, '&quot;'); }
+
+function openAddr() {
+  addrMode = 'add'; addrOpenKey = null; addrCashFor = null; addrMerging = null; addrDraft = {}; addrSession = 0;
+  document.getElementById('addrSearch').value = '';
+  addrRender();
+  document.getElementById('addrPanel').classList.add('open');
+  document.getElementById('addrPanel').scrollTop = 0;
+  setTimeout(() => document.getElementById('addrSearch').focus(), 260);
+}
+function closeAddr() {
+  if (document.activeElement) document.activeElement.blur();
+  document.getElementById('addrPanel').classList.remove('open');
+}
+function addrToggleManage() {
+  addrMode = addrMode === 'manage' ? 'add' : 'manage';
+  addrOpenKey = null; addrCashFor = null; addrMerging = null; addrDraft = {};
+  addrRender();
+}
+function addrOnSearch() {
+  addrOpenKey = null; addrCashFor = null; addrDraft = {};
+  addrRender();
+}
+function addrClearSearch() {
+  document.getElementById('addrSearch').value = '';
+  addrOnSearch();
+  document.getElementById('addrSearch').focus();
+}
+// Enter in the search box opens the first result
+function addrSearchEnter() {
+  const first = document.querySelector('#addrList .addr-row:not(.src)');
+  if (first) addrOpenRow(first.dataset.k);
+}
+
+// Street name first, then house number — keeps a street's houses together
+function addrCmp(a, b) {
+  const pa = a.key.match(/^(\d+)([A-Z]?) (.*)$/), pb = b.key.match(/^(\d+)([A-Z]?) (.*)$/);
+  const sa = pa ? pa[3] : a.key, sb = pb ? pb[3] : b.key;
+  if (sa !== sb) return sa < sb ? -1 : 1;
+  const na = pa ? parseInt(pa[1], 10) : -1, nb = pb ? parseInt(pb[1], 10) : -1;
+  if (na !== nb) return na - nb;
+  const xa = pa ? pa[2] : '', xb = pb ? pb[2] : '';
+  return xa < xb ? -1 : xa > xb ? 1 : 0;
+}
+
+function addrPayHtml(chg, k) {
+  return '<div class="addr-x">' +
+    '<div class="addr-field"><span class="addr-flabel">Delivery charge</span><span class="addr-pfx">£</span>' +
+      '<input class="addr-in addr-in-chg" type="number" inputmode="decimal" step="0.01" value="' + addrEsc(chg) + '" placeholder="0.00"></div>' +
+    '<div class="addr-btns">' +
+      '<button class="addr-btn cash' + (addrCashFor === k ? ' on' : '') + '" data-act="cash">' + ADDR_ICON_CASH + 'Cash</button>' +
+      '<button class="addr-btn card" data-act="card">' + ADDR_ICON_CARD + 'Card</button></div>' +
+    (addrCashFor === k
+      ? '<div class="addr-field"><span class="addr-flabel">Order total</span><span class="addr-pfx">£</span>' +
+          '<input class="addr-in addr-in-tot" type="number" inputmode="decimal" step="0.01" value="' + addrEsc(addrDraft.tot || '') + '" placeholder="0.00">' +
+          '<button class="addr-ok" data-act="cash-ok">✓</button></div>'
+      : '') +
+    '</div>';
+}
+function addrEditHtml(name, chg, isNew) {
+  return '<div class="addr-x">' +
+    '<input class="addr-in text addr-in-name" type="text" value="' + addrEsc(name) + '" placeholder="Address" autocomplete="off" spellcheck="false">' +
+    '<div class="addr-field"><span class="addr-flabel">Delivery charge</span><span class="addr-pfx">£</span>' +
+      '<input class="addr-in addr-in-chg" type="number" inputmode="decimal" step="0.01" value="' + addrEsc(chg) + '" placeholder="0.00"></div>' +
+    '<div class="addr-btns"><button class="addr-btn primary" data-act="save">Save</button>' +
+      (isNew ? '' : '<button class="addr-btn" data-act="merge">Merge</button><button class="addr-btn danger" data-act="delete">Delete</button>') +
+    '</div></div>';
+}
+
+function addrRender() {
+  const manage = addrMode === 'manage';
+  document.getElementById('addrPanel').classList.toggle('manage', manage);
+  document.getElementById('addrTitle').textContent = manage ? 'Manage addresses' : 'Add orders';
+  document.getElementById('addrManageBtn').textContent = manage ? 'Done' : 'Manage';
+  document.getElementById('addrCount').textContent = (!manage && addrSession > 0) ? addrSession + ' added' : '';
+
+  const qRaw = document.getElementById('addrSearch').value;
+  document.getElementById('addrSearchClear').classList.toggle('show', !!qRaw);
+  const toks = addrNorm(qRaw).split(' ').filter(Boolean);
+  const items = addrDB.list
+    .filter(e => !toks.length || toks.every(t => e.key.includes(t) || addrNorm(e.name).includes(t)))
+    .sort(addrCmp);
+
+  const src = addrMerging ? addrDB.list.find(x => x.key === addrMerging) : null;
+  document.getElementById('addrBanner').innerHTML = src
+    ? '<div class="addr-banner"><span>Merge <b>' + addrEsc(src.name) + '</b> into… tap the correct address.</span>' +
+      '<button class="addr-manage-btn" onclick="addrCancelMerge()">Cancel</button></div>'
+    : '';
+
+  let html = '';
+  // "add new" row: in add mode only when the search matches nothing (so a
+  // partial "gall" doesn't offer to create "Gall"); in manage mode always
+  // available at the top (except while merging).
+  const showNew = manage ? !src : (qRaw.trim() && items.length === 0);
+  const newRow = () => {
+    const open = addrOpenKey === 'NEW';
+    const label = manage ? '+ New address' : '+ Add “' + addrNiceName(qRaw) + '”';
+    let h = '<div class="addr-row new' + (open ? ' open' : '') + '" data-k="NEW"><div class="addr-main"><span class="addr-name">' + addrEsc(label) + '</span></div>';
+    if (open) h += manage
+      ? addrEditHtml(addrDraft.name != null ? addrDraft.name : addrNiceName(qRaw), addrDraft.chg || '', true)
+      : addrPayHtml(addrDraft.chg || '', 'NEW');
+    return h + '</div>';
+  };
+  if (showNew && manage) html += newRow();
+
+  items.forEach(e => {
+    const open = addrOpenKey === e.key;
+    const chg = addrDraft.chg != null && open ? addrDraft.chg : e.charge.toFixed(2);
+    html += '<div class="addr-row' + (open ? ' open' : '') + (addrMerging === e.key ? ' src' : '') + '" data-k="' + addrEsc(e.key) + '">' +
+      '<div class="addr-main"><span class="addr-name">' + addrEsc(e.name) + '</span><span class="addr-chg">' + fmt(e.charge) + '</span></div>';
+    if (open) html += manage ? addrEditHtml(addrDraft.name != null ? addrDraft.name : e.name, chg, false) : addrPayHtml(chg, e.key);
+    html += '</div>';
+  });
+  if (showNew && !manage) html += newRow();
+
+  if (!html) {
+    html = addrDB.list.length
+      ? '<div class="addr-empty">No matching address</div>'
+      : '<div class="addr-empty">No addresses yet.<br>Type one above to add it, or they’ll be<br>learned from scanned tickets.</div>';
+  }
+  document.getElementById('addrList').innerHTML = html;
+
+  document.getElementById('addrFoot').innerHTML = (manage && !src)
+    ? '<div class="addr-foot"><span>' + addrDB.list.length + ' address' + (addrDB.list.length !== 1 ? 'es' : '') + '</span>' +
+      '<button onclick="addrRebuild()">Rebuild from history</button></div>'
+    : '';
+}
+
+// Copy what's typed in the open row into addrDraft before a re-render
+function addrCaptureDraft() {
+  const row = document.querySelector('#addrList .addr-row.open');
+  if (!row) return;
+  const g = c => { const el = row.querySelector(c); return el ? el.value : undefined; };
+  const n = g('.addr-in-name'), c = g('.addr-in-chg'), t = g('.addr-in-tot');
+  if (n !== undefined) addrDraft.name = n;
+  if (c !== undefined) addrDraft.chg = c;
+  if (t !== undefined) addrDraft.tot = t;
+}
+function addrFocus(sel) {
+  const el = document.querySelector('#addrList .addr-row.open ' + sel);
+  if (el) { el.focus(); if (el.select) el.select(); }
+}
+
+function addrOpenRow(k) {
+  if (addrMerging) { addrPickMergeTarget(k); return; }
+  addrOpenKey = addrOpenKey === k ? null : k;
+  addrCashFor = null; addrDraft = {};
+  addrRender();
+  // Existing address in add mode: drop the keyboard so Cash/Card are visible.
+  // New address: go straight to the field that needs filling.
+  if (addrOpenKey === 'NEW') addrFocus(addrMode === 'manage' ? '.addr-in-name' : '.addr-in-chg');
+  else if (document.activeElement) document.activeElement.blur();
+}
+
+async function addrAction(act, k) {
+  addrCaptureDraft();
+  if (act === 'cash') {
+    addrCashFor = addrCashFor === k ? null : k;
+    addrRender();
+    if (addrCashFor) addrFocus('.addr-in-tot');
+  }
+  else if (act === 'card') addrCommit(k, 'card');
+  else if (act === 'cash-ok') addrCommit(k, 'cash');
+  else if (act === 'save') await addrSaveEdit(k);
+  else if (act === 'merge') { addrMerging = k; addrOpenKey = null; addrDraft = {}; addrRender(); }
+  else if (act === 'delete') await addrDelete(k);
+}
+
+// Add an order from the panel — produces exactly what a scanned ticket does:
+// a labelled delivery entry, plus a labelled cash-order entry when paid cash.
+function addrCommit(k, pay) {
+  const search = document.getElementById('addrSearch');
+  const isNew = k === 'NEW';
+  const e = isNew ? null : addrDB.list.find(x => x.key === k);
+  if (!isNew && !e) return;
+  const name = isNew ? addrNiceName(search.value) : e.name;
+  if (!name) { search.focus(); return; }
+  const chg = Math.round((parseFloat(addrDraft.chg) || 0) * 100) / 100;
+  if (!(chg > 0)) { addrFocus('.addr-in-chg'); return; }
+  let tot = null;
+  if (pay === 'cash') {
+    tot = Math.round((parseFloat(addrDraft.tot) || 0) * 100) / 100;
+    if (!(tot > 0)) { addrFocus('.addr-in-tot'); return; }
+  }
+  state.delivery.entries.push({ v: chg, tag: name });
+  if (pay === 'cash') state.orders.entries.push({ v: tot, tag: name });
+  addrLearn(name, chg, null, true);   // creates a new address, or updates a changed charge
+  addrSave();
+  renderEntries('delivery');
+  if (pay === 'cash') renderEntries('orders');
+  recalc();
+  addrSession++;
+  const short = name.length > 22 ? name.slice(0, 21) + '…' : name;
+  showToast('✓ ' + short + (pay === 'cash' ? ' · ' + fmt(tot) : ' · card'));
+  // ready for the next ticket
+  const wasTyping = !!search.value;
+  search.value = '';
+  addrOpenKey = null; addrCashFor = null; addrDraft = {};
+  addrRender();
+  if (wasTyping) search.focus(); else if (document.activeElement) document.activeElement.blur();
+}
+
+async function addrSaveEdit(k) {
+  const name = (addrDraft.name || '').replace(/\s+/g, ' ').trim();
+  const chg = Math.round((parseFloat(addrDraft.chg) || 0) * 100) / 100;
+  const k2 = addrKey(name);
+  if (!k2) { addrFocus('.addr-in-name'); return; }
+  if (!(chg > 0)) { addrFocus('.addr-in-chg'); return; }
+  const now = new Date().toISOString();
+
+  if (k === 'NEW') {
+    const existing = addrFind(name);
+    addrLearn(name, chg, now, true);
+    addrSave();
+    showToast(existing ? '✓ Updated ' + existing.name : '✓ Address added');
+    document.getElementById('addrSearch').value = '';
+    addrOpenKey = null; addrDraft = {};
+    addrRender();
+    return;
+  }
+
+  const e = addrDB.list.find(x => x.key === k);
+  if (!e) return;
+  if (k2 !== e.key) {
+    const other = addrDB.list.find(x => x.key === k2);
+    if (other) {
+      const ok = await confirmDialog('“' + other.name + '” is already in the list.\nMerge this address into it?', { okText: 'Merge' });
+      if (!ok) return;
+      addrDoMerge(e, other);
+      showToast('✓ Merged');
+      addrOpenKey = null; addrDraft = {};
+      addrRender();
+      return;
+    }
+    // rename: the old spelling becomes an alias so scans of it still resolve
+    delete addrDB.alias[k2];
+    addrRepoint(e.key, k2);
+    addrDB.alias[e.key] = k2;
+    addrDB.ignore = addrDB.ignore.filter(x => x !== k2);
+    e.key = k2;
+  }
+  e.name = name;
+  e.charge = chg;
+  e.seen = now;      // a manual edit beats anything older in history
+  addrSave();
+  showToast('✓ Saved');
+  addrOpenKey = null; addrDraft = {};
+  addrRender();
+}
+
+async function addrDelete(k) {
+  const e = addrDB.list.find(x => x.key === k);
+  if (!e) return;
+  const ok = await confirmDialog('Delete “' + e.name + '”?\nIt won’t be learned again from history.', { okText: 'Delete', danger: true });
+  if (!ok) return;
+  addrDB.list = addrDB.list.filter(x => x !== e);
+  if (!addrDB.ignore.includes(e.key)) addrDB.ignore.push(e.key);
+  // spellings that had been merged into it go with it
+  Object.keys(addrDB.alias).forEach(a => {
+    if (addrDB.alias[a] === e.key) { delete addrDB.alias[a]; if (!addrDB.ignore.includes(a)) addrDB.ignore.push(a); }
+  });
+  addrSave();
+  addrOpenKey = null; addrDraft = {};
+  addrRender();
+  showToast('Deleted');
+}
+
+function addrDoMerge(src, tgt) {
+  addrDB.list = addrDB.list.filter(x => x !== src);
+  addrRepoint(src.key, tgt.key);
+  addrDB.alias[src.key] = tgt.key;
+  addrSave();
+}
+async function addrPickMergeTarget(k) {
+  const src = addrDB.list.find(x => x.key === addrMerging);
+  const tgt = addrDB.list.find(x => x.key === k);
+  if (!src || !tgt || src === tgt) return;
+  const ok = await confirmDialog('Merge “' + src.name + '” into “' + tgt.name + '”?\n' + fmt(tgt.charge) + ' is kept, and the old spelling will match “' + tgt.name + '” from now on.', { okText: 'Merge' });
+  if (!ok) return;
+  addrDoMerge(src, tgt);
+  addrMerging = null;
+  addrRender();
+  showToast('✓ Merged');
+}
+function addrCancelMerge() { addrMerging = null; addrRender(); }
+
+function addrRebuild() {
+  const n = addrSeedFromShifts(loadHistory());
+  addrSave();
+  addrRender();
+  showToast(n ? 'Added ' + n + ' from history' : 'Nothing new in history');
+}
+
+// Row taps and button actions (one delegated listener for the whole list)
+document.addEventListener('DOMContentLoaded', () => {
+  const list = document.getElementById('addrList');
+  if (!list) return;
+  list.addEventListener('click', ev => {
+    const row = ev.target.closest('.addr-row');
+    if (!row) return;
+    const act = ev.target.closest('[data-act]');
+    if (act) { addrAction(act.dataset.act, row.dataset.k); return; }
+    if (ev.target.closest('.addr-x')) return;      // taps inside the inputs area
+    addrOpenRow(row.dataset.k);
+  });
+  list.addEventListener('keydown', ev => {
+    if (ev.key !== 'Enter') return;
+    const row = ev.target.closest('.addr-row');
+    if (!row) return;
+    if (ev.target.classList.contains('addr-in-tot')) addrAction('cash-ok', row.dataset.k);
+    else if (addrMode === 'manage') addrAction('save', row.dataset.k);
+  });
+});
 
 // ── Mini Calculator ──────────────────────────────────────────
 let calcTarget = null;   // which field key ('notes','coins' etc.)
