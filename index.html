@@ -244,11 +244,24 @@
   .addr-search:focus { border-color: var(--accent); }
   .addr-search::placeholder { color: var(--faint); }
   .addr-search-clear {
-    position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+    position: absolute; right: 18px; top: 32px; transform: translateY(-50%);
     background: none; border: none; color: var(--muted); font-size: 15px;
     padding: 6px 8px; cursor: pointer; display: none;
   }
   .addr-search-clear.show { display: block; }
+  /* Confirmation after adding an order. Lives in the sticky top, under the
+     search box, because the keyboard comes straight back up after each add
+     and hides anything anchored to the bottom of the screen (like the toast). */
+  .addr-flash {
+    display: none; align-items: center; gap: 8px; margin-top: 8px;
+    padding: 8px 12px; border-radius: 9px; font-size: 13.5px;
+    background: var(--keep-dim); border: 1px solid rgba(74,222,128,0.35); color: var(--keep);
+  }
+  .addr-flash.show { display: flex; animation: addrFlashIn .18s ease; }
+  @keyframes addrFlashIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+  .addr-flash svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .addr-flash-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  .addr-flash-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .addr-banner {
     margin: 10px 12px 0; padding: 10px 12px; border-radius: 10px; font-size: 13px;
     border: 1px solid var(--accent-line); background: var(--accent-dim); color: var(--text);
@@ -859,6 +872,7 @@
         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
         oninput="addrOnSearch()" onkeydown="if(event.key==='Enter') addrSearchEnter()">
       <button class="addr-search-clear" id="addrSearchClear" onclick="addrClearSearch()">✕</button>
+      <div class="addr-flash" id="addrFlash"></div>
     </div>
   </div>
   <div id="addrBanner"></div>
@@ -2480,6 +2494,7 @@ function addrEsc(s) { return scanEscape(String(s)).replace(/"/g, '&quot;'); }
 function openAddr() {
   addrMode = 'add'; addrOpenKey = null; addrCashFor = null; addrMerging = null; addrDraft = {}; addrSession = 0;
   document.getElementById('addrSearch').value = '';
+  addrHideFlash();
   addrRender();
   document.getElementById('addrPanel').classList.add('open');
   document.getElementById('addrPanel').scrollTop = 0;
@@ -2667,14 +2682,31 @@ function addrCommit(k, pay) {
   if (pay === 'cash') renderEntries('orders');
   recalc();
   addrSession++;
-  const short = name.length > 22 ? name.slice(0, 21) + '…' : name;
-  showToast('✓ ' + short + (pay === 'cash' ? ' · ' + fmt(tot) : ' · card'));
+  addrShowFlash(name, pay === 'cash' ? 'Cash ' + fmt(tot) : 'Card');
   // ready for the next ticket
   const wasTyping = !!search.value;
   search.value = '';
   addrOpenKey = null; addrCashFor = null; addrDraft = {};
   addrRender();
   if (wasTyping) search.focus(); else if (document.activeElement) document.activeElement.blur();
+}
+
+// Brief "added" confirmation under the search box; a new add replaces it
+// and restarts the timer, so rapid entries always show the latest one.
+function addrShowFlash(name, detail) {
+  const el = document.getElementById('addrFlash');
+  if (!el) return;
+  el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' +
+    '<span class="addr-flash-name">' + addrEsc(name) + '</span><span class="addr-flash-val">' + addrEsc(detail) + '</span>';
+  el.classList.remove('show');
+  void el.offsetWidth;            // restart the fade-in on back-to-back adds
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+function addrHideFlash() {
+  const el = document.getElementById('addrFlash');
+  if (el) { clearTimeout(el._t); el.classList.remove('show'); }
 }
 
 async function addrSaveEdit(k) {
