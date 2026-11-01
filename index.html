@@ -260,8 +260,9 @@
   .addr-flash.show { display: flex; animation: addrFlashIn .18s ease; }
   @keyframes addrFlashIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
   .addr-flash svg { width: 15px; height: 15px; flex-shrink: 0; }
-  .addr-flash-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
-  .addr-flash-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .addr-flash-body { flex: 1; min-width: 0; }
+  .addr-flash-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  .addr-flash-val { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; margin-top: 2px; }
   .addr-banner {
     margin: 10px 12px 0; padding: 10px 12px; border-radius: 10px; font-size: 13px;
     border: 1px solid var(--accent-line); background: var(--accent-dim); color: var(--text);
@@ -1191,7 +1192,11 @@ function recalc() {
   const cashBackRow = document.getElementById('cash-back-row');
   if (cashBackRow) {
     cashBackRow.style.display = summaryReady ? 'flex' : 'none';
-    document.getElementById('sum-cash-back').textContent = fmt(Math.max(0, cashBack));
+    // Shown signed: negative means you hold LESS cash than you've earned, and
+    // the figure is how much you're short. Rounded first so floating-point
+    // dust (-0.000001) doesn't display as "−£0.00".
+    const cb = Math.round(cashBack * 100) / 100;
+    document.getElementById('sum-cash-back').textContent = cb < 0 ? '−' + fmt(-cb) : fmt(cb);
   }
 
   save();
@@ -2682,7 +2687,7 @@ function addrCommit(k, pay) {
   if (pay === 'cash') renderEntries('orders');
   recalc();
   addrSession++;
-  addrShowFlash(name, pay === 'cash' ? 'Cash ' + fmt(tot) : 'Card');
+  addrShowFlash(name, 'Delivery ' + fmt(chg) + ' · ' + (pay === 'cash' ? 'Cash ' + fmt(tot) : 'Card'));
   // ready for the next ticket
   const wasTyping = !!search.value;
   search.value = '';
@@ -2697,7 +2702,7 @@ function addrShowFlash(name, detail) {
   const el = document.getElementById('addrFlash');
   if (!el) return;
   el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' +
-    '<span class="addr-flash-name">' + addrEsc(name) + '</span><span class="addr-flash-val">' + addrEsc(detail) + '</span>';
+    '<div class="addr-flash-body"><div class="addr-flash-name">' + addrEsc(name) + '</div><div class="addr-flash-val">' + addrEsc(detail) + '</div></div>';
   el.classList.remove('show');
   void el.offsetWidth;            // restart the fade-in on back-to-back adds
   el.classList.add('show');
