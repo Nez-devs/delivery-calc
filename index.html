@@ -808,7 +808,7 @@
     <div class="summary-card">
       <div class="summary-heading-row">
         <span class="summary-heading">Summary</span>
-        <span class="orders-chip" id="orders-chip" style="display:none"><span id="orders-chip-n">0</span> orders</span>
+        <span class="orders-chip" id="orders-chip" style="display:none"><span id="orders-chip-n">0</span> <span id="orders-chip-word">orders</span></span>
       </div>
       <div class="summary-row">
         <span class="summary-row-label" style="color:var(--muted)">Tips</span>
@@ -828,8 +828,8 @@
       </div>
       <div id="cash-back-row" style="display:none;justify-content:space-between;align-items:center;padding:10px 0 2px;border-top:1px solid var(--border);margin-top:6px">
         <div>
-          <div style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;color:var(--owe)">Cash to return</div>
-          <div style="font-size:10px;color:#444;margin-top:1px">Cash Held − Total Earnings</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;color:var(--owe)" id="cash-back-label">Cash to return</div>
+          <div style="font-size:10px;color:#444;margin-top:1px" id="cash-back-sub">Cash Held − Total Earnings</div>
         </div>
         <span style="font-family:'JetBrains Mono',monospace;font-size:19px;font-variant-numeric:tabular-nums;color:var(--owe)" id="sum-cash-back">£0.00</span>
       </div>
@@ -1185,6 +1185,7 @@ function recalc() {
   if (chip) {
     chip.style.display = orderCount > 0 ? 'inline-block' : 'none';
     document.getElementById('orders-chip-n').textContent = orderCount;
+    document.getElementById('orders-chip-word').textContent = orderCount === 1 ? 'order' : 'orders';
   }
 
   // Cash to return to boss: cash held minus total earnings
@@ -1192,11 +1193,21 @@ function recalc() {
   const cashBackRow = document.getElementById('cash-back-row');
   if (cashBackRow) {
     cashBackRow.style.display = summaryReady ? 'flex' : 'none';
-    // Shown signed: negative means you hold LESS cash than you've earned, and
-    // the figure is how much you're short. Rounded first so floating-point
-    // dust (-0.000001) doesn't display as "−£0.00".
+    // When you hold less cash than you've earned, the money flows the other
+    // way: the boss pays you the difference. Rather than show a minus sign,
+    // the row flips to "Owed to you" in green with a positive figure.
+    // Rounded first so floating-point dust (-0.000001) never flips the row.
     const cb = Math.round(cashBack * 100) / 100;
-    document.getElementById('sum-cash-back').textContent = cb < 0 ? '−' + fmt(-cb) : fmt(cb);
+    const owed = cb < 0;
+    const colour = owed ? 'var(--keep)' : 'var(--owe)';
+    const lbl = document.getElementById('cash-back-label');
+    const sub = document.getElementById('cash-back-sub');
+    const val = document.getElementById('sum-cash-back');
+    lbl.textContent = owed ? 'Owed to you' : 'Cash to return';
+    sub.textContent = owed ? 'Total Earnings − Cash Held' : 'Cash Held − Total Earnings';
+    lbl.style.color = colour;
+    val.style.color = colour;
+    val.textContent = fmt(Math.abs(cb));
   }
 
   save();
