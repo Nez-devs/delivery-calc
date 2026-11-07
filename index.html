@@ -112,6 +112,15 @@
   .entry-index { color: var(--faint); font-size: 11px; width: 18px; font-family: 'JetBrains Mono', monospace; }
   .entry-amount { color: var(--text); font-size: 14px; flex: 1; padding-left: 6px; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
   .entry-tag { color: var(--muted); font-size: 11px; margin-left: 8px; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0; }
+  /* Small cash/card note on delivery entries — same colours as the scan
+     review toggle (green cash, blue card), kept quiet so it reads as a note. */
+  .entry-pay {
+    font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; font-weight: 500;
+    padding: 1px 7px; border-radius: 6px; margin: 0 6px; flex-shrink: 0;
+    border: 1px solid transparent; letter-spacing: 0.2px;
+  }
+  .entry-pay.cash { color: var(--green); border-color: rgba(74,222,128,0.3); }
+  .entry-pay.card { color: var(--accent); border-color: var(--accent-line); }
   .entry-remove { background: none; border: none; color: #3a3a3a; font-size: 18px; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: color 0.15s; }
   .entry-remove:active { color: #ff4444; }
 
@@ -1006,6 +1015,9 @@ function fmt(n) { return '£' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',
 // These accessors read either shape so everything stays backward-compatible.
 function entryVal(e) { return (e && typeof e === 'object') ? (parseFloat(e.v) || 0) : (parseFloat(e) || 0); }
 function entryTag(e) { return (e && typeof e === 'object' && e.tag) ? String(e.tag) : ''; }
+// 'cash' | 'card' | '' — only delivery entries added from a scan or the
+// address list carry this; manual and older entries return ''.
+function entryPay(e) { return (e && typeof e === 'object' && (e.pay === 'cash' || e.pay === 'card')) ? e.pay : ''; }
 function fieldTotal(key) {
   const f = state[key];
   return (parseFloat(f.base) || 0) + f.entries.reduce((s, e) => s + entryVal(e), 0);
@@ -1027,7 +1039,9 @@ function renderEntries(key) {
     row.className = 'entry-row';
     const tag = entryTag(e);
     const tagHtml = tag ? `<span class="entry-tag">${tag}</span>` : '';
-    row.innerHTML = `<span class="entry-index">${i+1}.</span><span class="entry-amount">${fmt(entryVal(e))}${tagHtml}</span><button class="entry-remove" onclick="removeEntry('${key}',${i})">×</button>`;
+    const pay = key === 'delivery' ? entryPay(e) : '';
+    const payHtml = pay ? `<span class="entry-pay ${pay}">${pay}</span>` : '';
+    row.innerHTML = `<span class="entry-index">${i+1}.</span><span class="entry-amount">${fmt(entryVal(e))}${tagHtml}</span>${payHtml}<button class="entry-remove" onclick="removeEntry('${key}',${i})">×</button>`;
     attachEntryLongPress(row, key, i);
     list.appendChild(row);
   });
@@ -1092,7 +1106,12 @@ function saveEntryEdit() {
   const v = parseFloat(row.querySelector('.entry-edit-val').value);
   const tag = row.querySelector('.entry-edit-tag').value.trim();
   if (!v || v <= 0) { row.querySelector('.entry-edit-val').focus(); return; }
-  state[key].entries[idx] = tag ? { v, tag } : v;
+  // keep the cash/card note through an edit — the payment didn't change
+  const pay = entryPay(state[key].entries[idx]);
+  const ent = { v };
+  if (tag) ent.tag = tag;
+  if (pay) ent.pay = pay;
+  state[key].entries[idx] = (tag || pay) ? ent : v;
   entryEditing = null;
   renderEntries(key);
   recalc();
@@ -2313,7 +2332,12 @@ function scanAddAll() {
     const v = parseFloat(inp.value);
     if (v && v > 0) {
       const tag = t && t.tag ? t.tag : '';
-      state.delivery.entries.push(tag ? { v, tag } : v);
+      // carry the ticket's cash/card choice onto its delivery entry, so the
+      // Delivery charges list can show how each order was paid
+      const ent = { v };
+      if (tag) ent.tag = tag;
+      if (t) ent.pay = t.pay === 'card' ? 'card' : 'cash';
+      state.delivery.entries.push(ent);
       if (tag) addrLearn(tag, v);   // new addresses join the address book
       addedDeliv++;
     }
@@ -2690,7 +2714,7 @@ function addrCommit(k, pay) {
     tot = Math.round((parseFloat(addrDraft.tot) || 0) * 100) / 100;
     if (!(tot > 0)) { addrFocus('.addr-in-tot'); return; }
   }
-  state.delivery.entries.push({ v: chg, tag: name });
+  state.delivery.entries.push({ v: chg, tag: name, pay });
   if (pay === 'cash') state.orders.entries.push({ v: tot, tag: name });
   addrLearn(name, chg, null, true);   // creates a new address, or updates a changed charge
   addrSave();
