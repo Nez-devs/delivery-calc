@@ -154,7 +154,26 @@
   .summary-heading { font-family: 'Space Grotesk', sans-serif; color: var(--muted); font-size: 11px; font-weight: 500; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 10px; }
   .summary-heading-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .summary-heading-row .summary-heading { margin-bottom: 0; }
-  .orders-chip { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent-line); border-radius: 20px; padding: 3px 10px; letter-spacing: 0.2px; }
+  /* Order count chip. When any order knows how it was paid, a second segment
+     joins on the right with the cash/card split — one pill, two halves. */
+  .orders-chip {
+    font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.2px;
+    display: inline-flex; align-items: stretch; border: 1px solid var(--accent-line);
+    border-radius: 20px; overflow: hidden; white-space: nowrap;
+  }
+  .orders-chip-main { color: var(--accent); background: var(--accent-dim); padding: 3px 10px; }
+  .orders-split {
+    display: none; align-items: center; gap: 10px; padding: 3px 11px 3px 10px;
+    background: var(--surface2); border-left: 1px solid var(--accent-line);
+    color: var(--muted); font-weight: 500;
+  }
+  .orders-split.show { display: inline-flex; }
+  .os { display: inline-flex; align-items: center; gap: 4px; }
+  .os::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .os b { font-weight: 700; }
+  .os.cash { color: var(--green); }
+  .os.card { color: var(--accent); }
+  .os span { color: var(--muted); font-weight: 500; }
   .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-top: 1px solid var(--border); }
   .summary-row-label { font-size: 13px; color: var(--muted); }
   .summary-row-val { font-size: 14px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
@@ -817,7 +836,7 @@
     <div class="summary-card">
       <div class="summary-heading-row">
         <span class="summary-heading">Summary</span>
-        <span class="orders-chip" id="orders-chip" style="display:none"><span id="orders-chip-n">0</span> <span id="orders-chip-word">orders</span></span>
+        <span class="orders-chip" id="orders-chip" style="display:none"><span class="orders-chip-main"><span id="orders-chip-n">0</span> <span id="orders-chip-word">orders</span></span><span class="orders-split" id="orders-split"></span></span>
       </div>
       <div class="summary-row">
         <span class="summary-row-label" style="color:var(--muted)">Tips</span>
@@ -1202,9 +1221,20 @@ function recalc() {
   const orderCount = state.delivery.entries.length;
   const chip = document.getElementById('orders-chip');
   if (chip) {
-    chip.style.display = orderCount > 0 ? 'inline-block' : 'none';
+    chip.style.display = orderCount > 0 ? 'inline-flex' : 'none';
     document.getElementById('orders-chip-n').textContent = orderCount;
     document.getElementById('orders-chip-word').textContent = orderCount === 1 ? 'order' : 'orders';
+    // Cash/card split, from the payment note on each delivery entry. Entries
+    // typed by hand carry no note and simply aren't counted on either side;
+    // a side with zero is left out rather than showing "0 card".
+    let nCash = 0, nCard = 0;
+    state.delivery.entries.forEach(e => { const p = entryPay(e); if (p === 'cash') nCash++; else if (p === 'card') nCard++; });
+    const split = document.getElementById('orders-split');
+    let sh = '';
+    if (nCash) sh += '<span class="os cash"><b>' + nCash + '</b><span>cash</span></span>';
+    if (nCard) sh += '<span class="os card"><b>' + nCard + '</b><span>card</span></span>';
+    split.innerHTML = sh;
+    split.classList.toggle('show', !!sh);
   }
 
   // Cash to return to boss: cash held minus total earnings
