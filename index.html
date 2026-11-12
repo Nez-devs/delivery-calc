@@ -1207,10 +1207,14 @@ function recalc() {
   document.getElementById('delivery-total').textContent = fmt(deliveryTotal);
   document.getElementById('wage-total').textContent     = fmt(wage);
 
-  // Earnings summary stays blank until you've counted your cash. This is the
-  // scan-first-count-later case: orders/delivery may be full from scanning,
-  // but tips/total are meaningless until Cash Held is entered, so show —.
-  const summaryReady = cashHeld > 0;
+  // When does the earnings summary show?
+  //  - Cash orders on the shift: wait until some cash has been counted. This is
+  //    the scan-first-count-later case — orders/delivery are full from scanning,
+  //    but tips/total mean nothing until Cash Held is entered, so show —.
+  //  - No cash orders at all (an all-card shift): there's nothing to count, so
+  //    calculate straight away from delivery + wage. Still blank on an empty
+  //    shift, so a fresh screen doesn't show a row of £0.00s.
+  const summaryReady = cashHeld > 0 || (ordersTotal === 0 && (deliveryTotal > 0 || wage > 0));
   document.getElementById('sum-tips').textContent     = summaryReady ? fmt(tips) : '—';
   document.getElementById('sum-delivery').textContent = summaryReady ? fmt(deliveryTotal) : '—';
   document.getElementById('sum-wage').textContent     = summaryReady ? fmt(wage) : '—';
