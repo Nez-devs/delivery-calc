@@ -1052,6 +1052,15 @@ function renderEntries(key) {
   const list = document.getElementById(key + '-entries');
   const pill = document.getElementById(key + '-pill');
   const f    = state[key];
+  // Delivery charges are grouped cash → card → hand-typed (no pay note), and
+  // keep the order they were added within each group. The array itself is
+  // re-ordered rather than just the display, because removing and editing
+  // find an entry by its row position — sorting only the view would make
+  // them act on the wrong entry. Array.sort is stable, so adding order holds.
+  if (key === 'delivery') {
+    const rank = e => { const p = entryPay(e); return p === 'cash' ? 0 : p === 'card' ? 1 : 2; };
+    f.entries.sort((a, b) => rank(a) - rank(b));
+  }
   list.innerHTML = '';
   f.entries.forEach((e, i) => {
     const row = document.createElement('div');
